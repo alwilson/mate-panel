@@ -120,7 +120,7 @@ mate_panel_applet_frame_draw (GtkWidget *widget,
 
 	background = &frame->priv->panel->toplevel->background;
 	if (background->type == PANEL_BACK_IMAGE ||
-	    (background->type == PANEL_BACK_COLOR && background->has_alpha)) {
+	    ((background->type == PANEL_BACK_COLOR || background->type == PANEL_BACK_COLOR_CYCLE) && background->has_alpha)) {
 		cairo_pattern_t *bg_pattern;
 
 		/* Set the pattern transform so as to correctly render a patterned
@@ -175,7 +175,7 @@ mate_panel_applet_frame_update_background_size (MatePanelAppletFrame *frame,
 
 	background = &frame->priv->panel->toplevel->background;
 	if (background->type == PANEL_BACK_NONE ||
-	   (background->type == PANEL_BACK_COLOR && !background->has_alpha))
+	   ((background->type == PANEL_BACK_COLOR || background->type == PANEL_BACK_COLOR_CYCLE) && !background->has_alpha))
 		return;
 
 	mate_panel_applet_frame_change_background (frame, background->type);

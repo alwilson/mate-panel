@@ -156,7 +156,7 @@ panel_separator_size_allocate (GtkWidget     *widget,
 
 	background = &PANEL_SEPARATOR (widget)->priv->panel->toplevel->background;
 	if (background->type == PANEL_BACK_NONE ||
-	   (background->type == PANEL_BACK_COLOR && !background->has_alpha))
+	   ((background->type == PANEL_BACK_COLOR || background->type == PANEL_BACK_COLOR_CYCLE) && !background->has_alpha))
 		return;
 
 	panel_separator_change_background (PANEL_SEPARATOR (widget));

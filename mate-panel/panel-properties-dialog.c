@@ -67,6 +67,7 @@ typedef struct {
 	GtkWidget     *default_radio;
 	GtkWidget     *color_radio;
 	GtkWidget     *image_radio;
+	GtkWidget     *color_cycle_radio;
 	GtkWidget     *color_widgets;
 	GtkWidget     *image_widgets;
 	GtkWidget     *color_button;
@@ -499,6 +500,9 @@ panel_properties_dialog_background_toggled (PanelPropertiesDialog *dialog,
 	else if (radio == dialog->image_radio)
 		background_type = PANEL_BACK_IMAGE;
 
+	else if (radio == dialog->color_cycle_radio)
+		background_type = PANEL_BACK_COLOR_CYCLE;
+
 	panel_properties_dialog_upd_sensitivity (dialog, background_type);
 
 	panel_profile_set_background_type (dialog->toplevel, background_type);
@@ -514,6 +518,7 @@ panel_properties_dialog_setup_background_radios (PanelPropertiesDialog *dialog,
 	dialog->default_radio     = PANEL_GTK_BUILDER_GET (gui, "default_radio");
 	dialog->color_radio       = PANEL_GTK_BUILDER_GET (gui, "color_radio");
 	dialog->image_radio       = PANEL_GTK_BUILDER_GET (gui, "image_radio");
+	dialog->color_cycle_radio = PANEL_GTK_BUILDER_GET (gui, "color_cycle_radio");
 	dialog->color_widgets     = PANEL_GTK_BUILDER_GET (gui, "color_widgets");
 	dialog->image_widgets     = PANEL_GTK_BUILDER_GET (gui, "image_widgets");
 
@@ -527,6 +532,9 @@ panel_properties_dialog_setup_background_radios (PanelPropertiesDialog *dialog,
 		break;
 	case PANEL_BACK_IMAGE:
 		active_radio = dialog->image_radio;
+		break;
+	case PANEL_BACK_COLOR_CYCLE:
+		active_radio = dialog->color_cycle_radio;
 		break;
 	default:
 		active_radio = NULL;
@@ -546,11 +554,15 @@ panel_properties_dialog_setup_background_radios (PanelPropertiesDialog *dialog,
 	g_signal_connect_swapped (dialog->image_radio, "toggled",
 				  G_CALLBACK (panel_properties_dialog_background_toggled),
 				  dialog);
+	g_signal_connect_swapped (dialog->color_cycle_radio, "toggled",
+				  G_CALLBACK (panel_properties_dialog_background_toggled),
+				  dialog);
 
 	if ( ! panel_profile_background_key_is_writable (dialog->toplevel, "type")) {
 		gtk_widget_set_sensitive (dialog->default_radio, FALSE);
 		gtk_widget_set_sensitive (dialog->color_radio, FALSE);
 		gtk_widget_set_sensitive (dialog->image_radio, FALSE);
+		gtk_widget_set_sensitive (dialog->color_cycle_radio, FALSE);
 		gtk_widget_show (dialog->writability_warn_background);
 	}
 }
@@ -689,6 +701,9 @@ panel_properties_dialog_update_background_type (PanelPropertiesDialog *dialog,
 		break;
 	case PANEL_BACK_IMAGE:
 		active_radio = dialog->image_radio;
+		break;
+	case PANEL_BACK_COLOR_CYCLE:
+		active_radio = dialog->color_cycle_radio;
 		break;
 	default:
 		active_radio = NULL;

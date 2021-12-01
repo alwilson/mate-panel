@@ -45,9 +45,10 @@ typedef enum {
 } PanelAnimationSpeed;
 
 typedef enum {
-	PANEL_BACK_NONE  = 0,
-	PANEL_BACK_COLOR = 1,
-	PANEL_BACK_IMAGE = 2
+	PANEL_BACK_NONE        = 0,
+	PANEL_BACK_COLOR       = 1,
+	PANEL_BACK_IMAGE       = 2,
+	PANEL_BACK_COLOR_CYCLE = 3
 } PanelBackgroundType;
 
 typedef enum {

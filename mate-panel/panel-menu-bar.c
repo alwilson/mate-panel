@@ -273,7 +273,7 @@ static void panel_menu_bar_size_allocate(GtkWidget* widget, GtkAllocation* alloc
 	}
 
 	background = &PANEL_MENU_BAR(widget)->priv->panel->toplevel->background;
-	if (background->type == PANEL_BACK_NONE || (background->type == PANEL_BACK_COLOR && !background->has_alpha))
+	if (background->type == PANEL_BACK_NONE || ((background->type == PANEL_BACK_COLOR || background->type == PANEL_BACK_COLOR_CYCLE) && !background->has_alpha))
 	{
 		return;
 	}

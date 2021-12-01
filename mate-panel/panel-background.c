@@ -56,6 +56,7 @@ void panel_background_apply_css (PanelBackground *background, GtkWidget *widget)
 		gtk_style_context_remove_class (context, "mate-custom-panel-background");
 		break;
 	case PANEL_BACK_COLOR:
+	case PANEL_BACK_COLOR_CYCLE:
 	case PANEL_BACK_IMAGE:
 		gtk_style_context_add_class (context, "mate-custom-panel-background");
 		break;
@@ -135,6 +136,7 @@ panel_background_prepare (PanelBackground *background)
 		break;
 
 	case PANEL_BACK_COLOR:
+	case PANEL_BACK_COLOR_CYCLE:
 	{
 		GdkRGBA color = background->color;
 		if (!gdk_screen_is_composited (gdk_screen_get_default ())) {
@@ -230,6 +232,7 @@ panel_background_composite (PanelBackground *background)
 	switch (background->type) {
 	case PANEL_BACK_NONE:
 	case PANEL_BACK_COLOR:
+	case PANEL_BACK_COLOR_CYCLE:
 		break;
 	case PANEL_BACK_IMAGE:
         if (background->transformed_image) {
@@ -412,7 +415,7 @@ panel_background_update_has_alpha (PanelBackground *background)
 {
 	gboolean has_alpha = FALSE;
 
-	if (background->type == PANEL_BACK_COLOR)
+	if (background->type == PANEL_BACK_COLOR || background->type == PANEL_BACK_COLOR_CYCLE)
 		has_alpha = (background->color.alpha < 1.);
 
 	else if (background->type == PANEL_BACK_IMAGE &&
@@ -445,10 +448,32 @@ load_background_file (PanelBackground *background)
 	panel_background_update_has_alpha (background);
 }
 
+
+static gboolean
+cycle_background_color (PanelBackground *background)
+{
+	GdkRGBA color;
+
+	// Increment hue and convert HSV to RGB
+	background->color_cycle_hue += 0.0025;
+	if (background->color_cycle_hue >= 1.0)
+		background->color_cycle_hue = 0.0;
+
+	gtk_hsv_to_rgb(background->color_cycle_hue, 1.0, 0.7, &color.red, &color.green, &color.blue);
+	color.alpha = 1.;
+
+	panel_background_set_color (background, &color);
+
+	return TRUE;
+}
+
+
 void
 panel_background_set_type (PanelBackground     *background,
 			   PanelBackgroundType  type)
 {
+	GdkRGBA color;
+
 	if (background->type == type)
 		return;
 
@@ -456,9 +481,31 @@ panel_background_set_type (PanelBackground     *background,
 
 	background->type = type;
 
+	// Stop color cycle timer if it's running
+	if (background->color_cycle_timeout_id != -1) {
+		g_source_remove(background->color_cycle_timeout_id);
+		background->color_cycle_timeout_id = -1;
+
+		// Restore color and update if coming from color cycle
+		background->color = background->color_cycle_original_color;
+		if (background->type == PANEL_BACK_COLOR)
+			panel_background_set_color (background, &background->color);
+	}
+
+	// Start color cycle timer if set
+	if (background->type == PANEL_BACK_COLOR_CYCLE) {
+		// Save original background color
+		background->color_cycle_original_color = background->color;
+
+		// Run color cycle once now and setup timer
+		cycle_background_color (background);
+		background->color_cycle_timeout_id = g_timeout_add (250, (GSourceFunc) cycle_background_color, background);
+	}
+
 	panel_background_update_has_alpha (background);
 
 	panel_background_transform (background);
+
 }
 
 static void
@@ -744,6 +791,9 @@ panel_background_init (PanelBackground              *background,
 	background->default_color.blue  = 0.;
 	background->default_color.alpha = 1.;
 
+	background->color_cycle_timeout_id = -1;
+	background->color_cycle_hue        = 0.;
+
 	background->fit_image     = FALSE;
 	background->stretch_image = FALSE;
 	background->rotate_image  = FALSE;
@@ -801,7 +851,7 @@ panel_background_make_string (PanelBackground *background,
 			return NULL;
 
 		retval = g_strdup_printf ("pixmap:%d,%d,%d", (guint32)cairo_xlib_surface_get_drawable (surface), x, y);
-	} else if (effective_type == PANEL_BACK_COLOR) {
+	} else if (effective_type == PANEL_BACK_COLOR || effective_type == PANEL_BACK_COLOR_CYCLE) {
 		gchar *rgba = gdk_rgba_to_string (&background->color);
 		retval = g_strdup_printf (
 				"color:%s",

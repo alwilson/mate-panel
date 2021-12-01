@@ -60,6 +60,10 @@ struct _PanelBackground {
 	cairo_pattern_t        *default_pattern;
 	GdkRGBA                 default_color;
 
+	guint                   color_cycle_timeout_id;
+	float                   color_cycle_hue;
+	GdkRGBA                 color_cycle_original_color;
+
 	guint                   fit_image : 1;
 	guint                   stretch_image : 1;
 	guint                   rotate_image : 1;
